@@ -5,5 +5,5 @@ runway-python==0.6.1
 scikit-image==0.17.2
 scipy==1.5.4
 torch==1.6.0
-torchvision==0.4.2
+torchvision
 dlib
