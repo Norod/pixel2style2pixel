@@ -8,8 +8,8 @@ spec:
     gpu: True
 files:
     ignore:
-        - *.pt
-        - *.dat
+        - "*.pt"
+        - "*.dat"
 build_steps:
     - pip install runway-python==0.6.1
     - pip install -r requirements.txt
