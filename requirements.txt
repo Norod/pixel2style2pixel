@@ -51,9 +51,6 @@ locust==1.2.3
 Markdown==3.2.2
 MarkupSafe==1.1.1
 matplotlib==3.2.1
-mkl-fft==1.2.0
-mkl-random==1.1.1
-mkl-service==2.3.0
 more-itertools==8.6.0
 msgpack==1.0.0
 mxnet==1.6.0
