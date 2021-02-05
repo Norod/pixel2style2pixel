@@ -8,9 +8,9 @@ from PIL import ImageOps
 from scipy.ndimage import gaussian_filter
 import cv2
 
+
 MODEL_PATH = "shape_predictor_5_face_landmarks.dat"
 detector = dlib.get_frontal_face_detector()
-shape_predictor = dlib.shape_predictor(MODEL_PATH)
 
 
 def align(image_in, face_index=0, output_size=256):
@@ -42,6 +42,7 @@ def composite_images(quad, img, output):
 
 def get_landmarks(image):
     """Get landmarks from PIL image"""
+    shape_predictor = dlib.shape_predictor(MODEL_PATH)
 
     max_size = max(image.size)
     reduction_scale = int(max_size/512)
