@@ -11,8 +11,15 @@ use_fallback = False
 
 # Try loading precompiled, otherwise use native fallback
 try:
-    import fused
-except ModuleNotFoundError as e:
+    module_path = os.path.dirname(__file__)
+    fused = load(
+        'fused',
+        sources=[
+            os.path.join(module_path, 'fused_bias_act.cpp'),
+            os.path.join(module_path, 'fused_bias_act_kernel.cu'),
+        ],
+    )
+except Exception as e:
     print('StyleGAN2: Optimized CUDA op FusedLeakyReLU not available, using native PyTorch fallback.')
     use_fallback = True
 

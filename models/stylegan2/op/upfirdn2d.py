@@ -10,8 +10,16 @@ use_fallback = False
 
 # Try loading precompiled, otherwise use native fallback
 try:
-    import upfirdn2d_op
-except ModuleNotFoundError as e:
+    module_path = os.path.dirname(__file__)
+    upfirdn2d_op = load(
+        'upfirdn2d',
+        sources=[
+            os.path.join(module_path, 'upfirdn2d.cpp'),
+            os.path.join(module_path, 'upfirdn2d_kernel.cu'),
+        ],
+    )
+
+except Exception as e:
     print('StyleGAN2: Optimized CUDA op UpFirDn2d not available, using native PyTorch fallback.')
     use_fallback = True
 
