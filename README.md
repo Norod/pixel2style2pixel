@@ -4,7 +4,17 @@ Edit faces using Pixel2Style2Pixel and Style Space analysis.
 
 [![Open in RunwayML Badge](https://open-app.runwayml.com/gh-badge.svg)](https://app.runwayml.com/models/justinpinkney/Style-space-face-editing)
 
-![](face-edit-runway.gif)
+![](images/face-edit-runway.gif)
+
+## Examples
+
+![](images/combo.jpg)
+![](images/dl.jpeg)
+![](images/makeup.jpg)
+![](images/goatee.jpeg)
+![](images/gothic.jpeg)
+![](images/satc.jpeg)
+![](images/shaving.jpg)
 
 ## References
 
