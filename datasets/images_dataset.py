@@ -1,6 +1,8 @@
 from torch.utils.data import Dataset
 from PIL import Image
 from utils import data_utils
+import torchvision
+import numpy as np
 
 
 class ImagesDataset(Dataset):
@@ -29,5 +31,9 @@ class ImagesDataset(Dataset):
 			from_im = self.source_transform(from_im)
 		else:
 			from_im = to_im
+			
+		if np.random.rand() < 0.5:
+			from_im = torchvision.transforms.functional.hflip(from_im)
+			to_im = torchvision.transforms.functional.hflip(to_im)
 
 		return from_im, to_im
