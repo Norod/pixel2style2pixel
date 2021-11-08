@@ -45,7 +45,12 @@ def run():
 
 	net = pSp(opts)
 	net.eval()
-	net.cuda()
+
+	if opts.device == "cuda":
+		net.cuda()
+	
+	if opts.device == "cpu":
+		net.cpu()
 
 	print('Loading dataset for {}'.format(opts.dataset_type))
 	dataset_args = data_configs.DATASETS[opts.dataset_type]
@@ -68,7 +73,10 @@ def run():
 		if global_i >= opts.n_images:
 			break
 		with torch.no_grad():
-			input_cuda = input_batch.cuda().float()
+			if opts.device == "cuda":
+				input_cuda = input_batch.cuda().float()
+			if opts.device == "cpu":
+				input_cuda = input_batch.cpu().float()
 			tic = time.time()
 			result_batch = run_on_batch(input_cuda, net, opts)
 			toc = time.time()
@@ -115,11 +123,11 @@ def run_on_batch(inputs, net, opts):
 		for image_idx, input_image in enumerate(inputs):
 			# get latent vector to inject into our input image
 			vec_to_inject = np.random.randn(1, 512).astype('float32')
-			_, latent_to_inject = net(torch.from_numpy(vec_to_inject).to("cuda"),
+			_, latent_to_inject = net(torch.from_numpy(vec_to_inject).to(opts.device),
 			                          input_code=True,
 			                          return_latents=True)
 			# get output image with injected style vector
-			res = net(input_image.unsqueeze(0).to("cuda").float(),
+			res = net(input_image.unsqueeze(0).to(opts.device).float(),
 			          latent_mask=latent_mask,
 			          inject_latent=latent_to_inject,
 			          alpha=opts.mix_alpha,

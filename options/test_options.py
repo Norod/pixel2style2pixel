@@ -24,6 +24,10 @@ class TestOptions:
 		self.parser.add_argument('--mix_alpha', type=float, default=None, help='Alpha value for style-mixing')
 		self.parser.add_argument('--latent_mask', type=str, default=None, help='Comma-separated list of latents to perform style-mixing with')
 
+		self.parser.add_argument('--device', type=str, default="cuda", help='cuda | cpu')
+
+		
+
 		# arguments for super-resolution
 		self.parser.add_argument('--resize_factors', type=str, default=None,
 		                         help='Downsampling factor for super-res (should be a single value for inference).')
