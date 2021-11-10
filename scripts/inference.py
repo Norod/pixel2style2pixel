@@ -18,7 +18,6 @@ from utils.common import tensor2im, log_input_image
 from options.test_options import TestOptions
 from models.psp import pSp
 
-
 def run():
 	test_opts = TestOptions().parse()
 
@@ -74,11 +73,11 @@ def run():
 			break
 		with torch.no_grad():
 			if opts.device == "cuda":
-				input_cuda = input_batch.cuda().float()
+				input_batch_device = input_batch.cuda().float()
 			if opts.device == "cpu":
-				input_cuda = input_batch.cpu().float()
+				input_batch_device = input_batch.cpu().float()
 			tic = time.time()
-			result_batch = run_on_batch(input_cuda, net, opts)
+			result_batch = run_on_batch(input_batch_device, net, opts)
 			toc = time.time()
 			global_time.append(toc - tic)
 
@@ -115,8 +114,19 @@ def run():
 
 
 def run_on_batch(inputs, net, opts):
-	if opts.latent_mask is None:
+	if opts.latent_mask is None:		
 		result_batch = net(inputs, randomize_noise=False, resize=opts.resize_outputs)
+
+        # To export as TorchScript
+		# Run with test_batch_size=1 and a single image and uncomment the following lines
+		
+		# net.eval()
+		# tensor_in = torch.Tensor(inputs)
+		# traced_model = torch.jit.trace(net, tensor_in)
+		# result_batch = traced_model(tensor_in)
+		# tensor_out = torch.Tensor(result_batch)
+		# m = torch.jit.script(traced_model)
+		# torch.jit.save(m, 'p2s2p_torchscript.pt')
 	else:
 		latent_mask = [int(l) for l in opts.latent_mask.split(",")]
 		result_batch = []
