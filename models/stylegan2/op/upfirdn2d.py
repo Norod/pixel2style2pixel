@@ -5,6 +5,7 @@ import torch
 from torch.nn import functional as F
 from torch.autograd import Function
 from torch.utils.cpp_extension import load
+from typing import Tuple
 
 use_fallback = False
 
@@ -149,21 +150,34 @@ class UpFirDn2d(Function):
         return grad_input, None, None, None, None
 
 
-def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
-    if use_fallback or input.device.type == "cpu":
-        out = upfirdn2d_native(
+# def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
+#     if use_fallback or input.device.type == "cpu":
+#         out = upfirdn2d_native(
+#             input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
+#         )
+#     else:
+#         out = UpFirDn2d.apply(
+#             input, kernel, (up, up), (down, down), (pad[0], pad[1], pad[0], pad[1])
+#         )
+
+#     return out
+
+# def upfirdn2d(input, kernel, up:int=1, down:int=1, pad_0:int=0, pad_1:int=0):
+#     out = upfirdn2d_native(
+#             input, kernel, up, up, down, down, pad_0, pad_1, pad_0, pad_1
+#         )
+
+#     return out
+
+def upfirdn2d(input, kernel, up:int=1, down:int=1, pad:Tuple[int, int]=(0, 0)):
+    out = upfirdn2d_native(
             input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
-        )
-    else:
-        out = UpFirDn2d.apply(
-            input, kernel, (up, up), (down, down), (pad[0], pad[1], pad[0], pad[1])
         )
 
     return out
 
-
 def upfirdn2d_native(
-    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    input, kernel, up_x:int, up_y:int, down_x:int, down_y:int, pad_x0:int, pad_x1:int, pad_y0:int, pad_y1:int
 ):
     _, channel, in_h, in_w = input.shape
     input = input.reshape(-1, in_h, in_w, 1)

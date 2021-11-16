@@ -91,7 +91,11 @@ class GradualStyleEncoder(Module):
         x = self.input_layer(x)
 
         latents = []
-        modulelist = list(self.body._modules.values())
+        if hasattr(self.body, '_modules'):
+            modulelist = list(self.body._modules.values())
+        else:            
+            return None
+        
         for i, l in enumerate(modulelist):
             x = l(x)
             if i == 6:

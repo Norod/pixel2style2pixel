@@ -115,18 +115,23 @@ def run():
 
 def run_on_batch(inputs, net, opts):
 	if opts.latent_mask is None:		
-		result_batch = net(inputs, randomize_noise=False, resize=opts.resize_outputs)
+		#result_batch = net(inputs, randomize_noise=False, resize=opts.resize_outputs)
 
         # To export as TorchScript
 		# Run with test_batch_size=1 and a single image and uncomment the following lines
 		
-		# net.eval()
-		# tensor_in = torch.Tensor(inputs)
-		# traced_model = torch.jit.trace(net, tensor_in)
-		# result_batch = traced_model(tensor_in)
+		net.eval()
+		tensor_in = torch.Tensor(inputs)
+
+		traced_model = torch.jit.trace(net, tensor_in)
+		result_batch = traced_model(tensor_in)
+		tensor_out = torch.Tensor(result_batch)
+
+		# scripted_model = torch.jit.script(net)
+		# result_batch = scripted_model(tensor_in)
 		# tensor_out = torch.Tensor(result_batch)
-		# m = torch.jit.script(traced_model)
-		# torch.jit.save(m, 'p2s2p_torchscript.pt')
+
+		torch.jit.save(traced_model, 'toonmoji2_p2s2p_traced.pt')
 	else:
 		latent_mask = [int(l) for l in opts.latent_mask.split(",")]
 		result_batch = []

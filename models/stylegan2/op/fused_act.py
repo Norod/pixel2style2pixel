@@ -90,10 +90,15 @@ class FusedLeakyReLU(nn.Module):
         return fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
 
 
-def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2 ** 0.5):
-    if use_fallback or input.device.type == 'cpu':
-        return scale * F.leaky_relu(
+# def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2 ** 0.5):
+#     if (use_fallback == True) or (input.device.type == 'cpu'):
+#         return scale * F.leaky_relu(
+#             input + bias.view((1, -1)+(1,)*(input.ndim-2)), negative_slope=negative_slope
+#         )
+#     else:
+#         return FusedLeakyReLUFunction.apply(input, bias, negative_slope, scale)
+
+def fused_leaky_relu(input, bias, negative_slope:float=0.2, scale:float=2 ** 0.5):
+    return scale * F.leaky_relu(
             input + bias.view((1, -1)+(1,)*(input.ndim-2)), negative_slope=negative_slope
         )
-    else:
-        return FusedLeakyReLUFunction.apply(input, bias, negative_slope, scale)

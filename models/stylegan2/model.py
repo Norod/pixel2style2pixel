@@ -1,10 +1,14 @@
 import math
 import random
+from sphinx.util.typing import NoneType
 import torch
 from torch import nn
+from torch.functional import Tensor
 from torch.nn import functional as F
+from typing import Optional, List
 
 from models.stylegan2.op import FusedLeakyReLU, fused_leaky_relu, upfirdn2d
+from traitlets.traitlets import Bool
 
 
 class PixelNorm(nn.Module):
@@ -43,6 +47,7 @@ class Upsample(nn.Module):
 
     def forward(self, input):
         out = upfirdn2d(input, self.kernel, up=self.factor, down=1, pad=self.pad)
+        #out = upfirdn2d(input, self.kernel, up=self.factor, down=1, pad_0=self.pad[0], pad_1=self.pad[1])
 
         return out
 
@@ -64,6 +69,7 @@ class Downsample(nn.Module):
 
     def forward(self, input):
         out = upfirdn2d(input, self.kernel, up=1, down=self.factor, pad=self.pad)
+        #out = upfirdn2d(input, self.kernel, up=1, down=self.factor, pad_0=self.pad[0], pad_1=self.pad[1])
 
         return out
 
@@ -83,6 +89,7 @@ class Blur(nn.Module):
 
     def forward(self, input):
         out = upfirdn2d(input, self.kernel, pad=self.pad)
+        #out = upfirdn2d(input, self.kernel, pad_0=self.pad[0], pad_1=self.pad[1])
 
         return out
 
@@ -145,7 +152,7 @@ class EqualLinear(nn.Module):
         self.lr_mul = lr_mul
 
     def forward(self, input):
-        if self.activation:
+        if self.activation is not None:
             out = F.linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
 
@@ -254,10 +261,12 @@ class ModulatedConv2d(nn.Module):
             out = F.conv_transpose2d(input, weight, padding=0, stride=2, groups=batch)
             _, _, height, width = out.shape
             out = out.view(batch, self.out_channel, height, width)
-            out = self.blur(out)
+            if hasattr(self, 'blur'):
+                out = self.blur(out)
 
         elif self.downsample:
-            input = self.blur(input)
+            if hasattr(self, 'blur'):
+                input = self.blur(input)
             _, _, height, width = input.shape
             input = input.view(1, batch * in_channel, height, width)
             out = F.conv2d(input, weight, padding=0, stride=2, groups=batch)
@@ -279,7 +288,7 @@ class NoiseInjection(nn.Module):
 
         self.weight = nn.Parameter(torch.zeros(1))
 
-    def forward(self, image, noise=None):
+    def forward(self, image:Tensor, noise:Optional[Tensor]=None):
         if noise is None:
             batch, _, height, width = image.shape
             noise = image.new_empty(batch, 1, height, width).normal_()
@@ -328,7 +337,7 @@ class StyledConv(nn.Module):
         # self.activate = ScaledLeakyReLU(0.2)
         self.activate = FusedLeakyReLU(out_channel)
 
-    def forward(self, input, style, noise=None):
+    def forward(self, input, style, noise:Optional[Tensor]=None):
         out = self.conv(input, style)
         out = self.noise(out, noise=noise)
         # out = out + self.bias
@@ -347,14 +356,14 @@ class ToRGB(nn.Module):
         self.conv = ModulatedConv2d(in_channel, 3, 1, style_dim, demodulate=False)
         self.bias = nn.Parameter(torch.zeros(1, 3, 1, 1))
 
-    def forward(self, input, style, skip=None):
+    def forward(self, input, style, skip:Optional[Tensor]=None):
         out = self.conv(input, style)
         out = out + self.bias
 
         if skip is not None:
-            skip = self.upsample(skip)
-
-            out = out + skip
+            if hasattr(self, 'upsample'):
+                skip = self.upsample(skip)
+                out = out + skip
 
         return out
 
@@ -469,36 +478,51 @@ class Generator(nn.Module):
 
     def forward(
             self,
-            styles,
-            return_latents=False,
-            return_features=False,
-            inject_index=None,
-            truncation=1,
-            truncation_latent=None,
-            input_is_latent=False,
-            noise=None,
-            randomize_noise=True,
+            styles:List[Optional[Tensor]],
+            return_latents:bool=False,
+            return_features:bool=False,
+            inject_index:Optional[int]=None,
+            truncation:float=1,
+            truncation_latent:Optional[Tensor]=None,
+            input_is_latent:bool=False,
+            noise:Optional[List[Tensor]]=None,
+            randomize_noise:bool=True,
     ):
         if not input_is_latent:
             styles = [self.style(s) for s in styles]
 
         if noise is None:
-            if randomize_noise:
-                noise = [None] * self.num_layers
+            if randomize_noise:                
+                noise = [torch.tensor(1.0)] * self.num_layers
             else:
-                noise = [
-                    getattr(self.noises, f'noise_{i}') for i in range(self.num_layers)
-                ]
+                noise = []
+                noise.append(getattr(self.noises,'noise_0'))
+                noise.append(getattr(self.noises,'noise_1'))
+                noise.append(getattr(self.noises,'noise_2'))
+                noise.append(getattr(self.noises,'noise_3'))
+                noise.append(getattr(self.noises,'noise_4'))
+                noise.append(getattr(self.noises,'noise_5'))
+                noise.append(getattr(self.noises,'noise_6'))
+                noise.append(getattr(self.noises,'noise_7'))
+                noise.append(getattr(self.noises,'noise_8'))
+                noise.append(getattr(self.noises,'noise_9'))
+                noise.append(getattr(self.noises,'noise_10'))
+                noise.append(getattr(self.noises,'noise_11'))
+                noise.append(getattr(self.noises,'noise_12'))
+                noise.append(getattr(self.noises,'noise_13'))
+                noise.append(getattr(self.noises,'noise_14'))
+                noise.append(getattr(self.noises,'noise_15'))
+                noise.append(getattr(self.noises,'noise_16'))
 
-        if truncation < 1:
-            style_t = []
+        # if truncation < 1:
+        #     style_t = []
 
-            for style in styles:
-                style_t.append(
-                    truncation_latent + truncation * (style - truncation_latent)
-                )
+        #     for style in styles:
+        #         style_t.append(
+        #             truncation_latent + truncation * (style - truncation_latent)
+        #         )
 
-            styles = style_t
+        #     styles = style_t
 
         if len(styles) < 2:
             inject_index = self.n_latent
@@ -510,7 +534,7 @@ class Generator(nn.Module):
 
         else:
             if inject_index is None:
-                inject_index = random.randint(1, self.n_latent - 1)
+                inject_index = torch.randint(1, self.n_latent - 1)
 
             latent = styles[0].unsqueeze(1).repeat(1, inject_index, 1)
             latent2 = styles[1].unsqueeze(1).repeat(1, self.n_latent - inject_index, 1)
@@ -523,14 +547,22 @@ class Generator(nn.Module):
         skip = self.to_rgb1(out, latent[:, 1])
 
         i = 1
-        for conv1, conv2, noise1, noise2, to_rgb in zip(
-                self.convs[::2], self.convs[1::2], noise[1::2], noise[2::2], self.to_rgbs
-        ):
-            out = conv1(out, latent[:, i], noise=noise1)
-            out = conv2(out, latent[:, i + 1], noise=noise2)
-            skip = to_rgb(out, latent[:, i + 2], skip)
 
-            i += 2
+        if isinstance(self.to_rgbs, torch.nn.modules.container.ModuleList):
+            etrgbs = enumerate(self.to_rgbs)            
+            econv1 = enumerate(self.convs[::2])            
+            econv2 = enumerate(self.convs[1::2])            
+            enoise1 = enumerate(noise[1::2])        
+            enoise2 = enumerate(noise[2::2])
+
+            for conv1, conv2, noise1, noise2, to_rgb in zip(
+                    econv1, econv2, enoise1, enoise2, etrgbs
+            ):
+                out = conv1[1](out, latent[:, i], noise=noise1[1])
+                out = conv2[1](out, latent[:, i + 1], noise=noise2[1])            
+                skip = to_rgb[1](out, latent[:, i + 2], skip)
+
+                i += 2
 
         image = skip
 
