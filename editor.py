@@ -13,7 +13,6 @@ from models.encoders import psp_encoders
 from models.psp import get_keys, pSp
 from models.stylegan2.model import Generator
 from utils.common import log_input_image, tensor2im
-import face_detection
 
 
 tforms = transforms.Compose([
@@ -110,19 +109,22 @@ def load_model(checkpoint_path):
     return encoder, decoder, latent_avg
 
     
-def run(encoder, decoder, latent_avg, original):
+def run(encoder, decoder, latent_avg, original, output_pil=True, input_is_pil=True):
     """Encode and decode an image"""
 
-    input_image = tforms(original).to(device)
+    if input_is_pil:
+        input_image = tforms(original).to(device)
+    else:
+        input_image = original.to(device)
 
     with torch.no_grad():
 
         codes = encoder(input_image.unsqueeze(0).float())
         codes = codes + latent_avg.repeat(codes.shape[0], 1, 1)
-        image, latent = decoder([codes], input_is_latent=True)
+        image, latent = decoder([codes], input_is_latent=True, randomize_noise=False)
         out_im = image.squeeze()
 
-    return tensor2im(out_im)
+    return tensor2im(out_im, pil=output_pil)
 
 
 class StyleManipulator:

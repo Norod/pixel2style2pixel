@@ -1,9 +1,6 @@
 """
 This file defines the core research contribution
 """
-import matplotlib
-
-matplotlib.use('Agg')
 import torch
 from torch import nn
 from models.encoders import psp_encoders
