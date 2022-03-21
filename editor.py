@@ -109,7 +109,7 @@ def load_model(checkpoint_path):
     return encoder, decoder, latent_avg
 
     
-def run(encoder, decoder, latent_avg, original, output_pil=True, input_is_pil=True):
+def run(encoder, decoder, latent_avg, original, edit=None, output_pil=True, input_is_pil=True):
     """Encode and decode an image"""
 
     if input_is_pil:
@@ -121,6 +121,8 @@ def run(encoder, decoder, latent_avg, original, output_pil=True, input_is_pil=Tr
 
         codes = encoder(input_image.unsqueeze(0).float())
         codes = codes + latent_avg.repeat(codes.shape[0], 1, 1)
+        if edit is not None:
+            codes = codes + edit
         image, latent = decoder([codes], input_is_latent=True, randomize_noise=False)
         out_im = image.squeeze()
 
