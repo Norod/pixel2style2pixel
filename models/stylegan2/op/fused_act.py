@@ -7,7 +7,7 @@ from torch.autograd import Function
 import torch.nn.functional as F
 from torch.utils.cpp_extension import load
 
-use_fallback = False
+use_fallback = True
 
 # Try loading precompiled, otherwise use native fallback
 try:

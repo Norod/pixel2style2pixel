@@ -28,19 +28,26 @@ def load_image_as_array(path):
 
     return im_array
 
-im_array = load_image_as_array('test_data/face-ok.jpg')
-tensor_in = torch.Tensor(im_array)
+def run():
+    im_array = load_image_as_array('test_data/face-ok.jpg')
+    tensor_in = torch.Tensor(im_array)
 
-test_image = tensor2im(tensor_in[0])
-test_image.show()
+    test_image = tensor2im(tensor_in[0])
+    #test_image.show()
 
-net = torch.jit.load('p2s2p_torchscript.pt')
-net.eval()
-#result = net(tensor_in)
+    net = torch.jit.load('p2s2p_torchscript.pt')
+    net.eval()
+    net.cuda()
+    #result = net(tensor_in)
+    tensor_in = tensor_in.cuda().float()
+    traced_model = torch.jit.trace(net, tensor_in)
+    result = traced_model(tensor_in)
 
-traced_model = torch.jit.trace(net, tensor_in)
-result = traced_model(tensor_in)
+    result = result.cpu().float()
 
-output_image = tensor2im(result[0])
-output_image.save('face-toon.jpg')
-output_image.show()
+    output_image = tensor2im(result[0])
+    output_image.save('face-toon.jpg')
+    #output_image.show()
+
+if __name__ == '__main__':
+	run()
